@@ -288,7 +288,7 @@ if __name__ == '__main__':
 
     # Call rename_workspaces() for relevant window events
     def event_handler(i3, e):
-        if e.change in ['new', 'close', 'move']:
+        if e.change in ['new', 'close', 'move', 'title']:
             rename_workspaces(i3, icon_list_format=args.icon_list_format)
 
     i3.on('window', event_handler)
