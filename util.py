@@ -76,6 +76,12 @@ def format_icon_list(icon_list, icon_list_format='default'):
         # Default (no formatting)
         return ' '.join(icon_list)
 
+    elif icon_list_format.lower() == 'single':
+        new_list = []
+        if len(icon_list) > 0:
+            new_list.append(icon_list[0])
+        return ' '.join(new_list)
+
     elif icon_list_format.lower() == 'mathematician':
         # Mathematician mode
         # aababa -> a⁴b²

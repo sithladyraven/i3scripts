@@ -118,6 +118,7 @@ WINDOW_NAMES = {
     'bash': fa.icons['terminal'],
     'emacs': fa.icons['file-code'],
     'glances': fa.icons['server'],
+    'GNU Image Manipulation Program': fa.icons['paint-brush'],
     'gotop': fa.icons['server'],
     'htop': fa.icons['server'],
     'mutt': fa.icons['envelope-square'],
@@ -138,16 +139,14 @@ WINDOW_NAMES = {
 # This icon is used for any application not in the list above
 DEFAULT_ICON = '*'
 
-# If true, only the first non-default icon will be shown
-SINGLE_ICON_ONLY = False
-
 # Global setting that determines whether workspaces will be automatically
 # re-numbered in ascending order with a "gap" left on each monitor. This is
 # overridden via command-line flag.
 RENUMBER_WORKSPACES = True
 
-# Attempt to use window name first to determine the icon to be used
-CHECK_WINDOW_NAMES_FIRST = True
+# Attempt to use window name first to determine the icon to be used for
+# more refined selection of icon
+CHECK_WINDOW_NAMES = True
 
 # Require window names to be exact match. If false window names must only
 # start with the provided name
@@ -161,6 +160,8 @@ def ensure_window_icons_lowercase():
 
 def icon_for_name(window):
     names = xprop(window.window, 'WM_NAME')
+    logging.info('Classes len:' + str(len(names)))
+    logging.info('names:' + str(names))
     if names != None and len(names) > 0:
         for nam in names:
             nam = nam.lower()
@@ -176,26 +177,28 @@ def icon_for_name(window):
 
 def icon_for_class(window):
     classes = xprop(window.window, 'WM_CLASS')
+    logging.info('Classes len:' + str(len(classes)))
+    logging.info('classes:' + str(classes))
     if classes != None and len(classes) > 0:
         for cls in classes:
             cls = cls.lower()  # case-insensitive matching
             if cls in WINDOW_ICONS:
                 return WINDOW_ICONS[cls]
     logging.info(
-        'No icon available for window with classes: %s' % str(classes))
+        'No icon available for window with class: %s' % str(classes))
 
 def icon_for_window(window):
-    class_icon = icon_for_class(window)
-    name_icon = icon_for_name(window)
 
-    if CHECK_WINDOW_NAMES_FIRST and name_icon != None:
-        return name_icon
+    if CHECK_WINDOW_NAMES:
+        icon = icon_for_name(window)
 
-    if class_icon != None:
-        return class_icon
+    if icon == None:
+        icon = icon_for_class(window)
 
-    return DEFAULT_ICON
+    if icon == None:
+        icon = DEFAULT_ICON
 
+    return icon
 
 # renames all workspaces based on the windows present
 # also renumbers them in ascending order, with one gap left between monitors
@@ -209,8 +212,6 @@ def rename_workspaces(i3, icon_list_format='default'):
 
         name_parts = parse_workspace_name(workspace.name)
         icon_list = [icon_for_window(w) for w in workspace.leaves()]
-        if SINGLE_ICON_ONLY:
-            icon_list = next((icon for icon in icon_list if icon != DEFAULT_ICON), DEFAULT_ICON)
         new_icons = format_icon_list(icon_list, icon_list_format)
 
         # As we enumerate, leave one gap in workspace numbers between each monitor.
@@ -267,6 +268,7 @@ if __name__ == '__main__':
         "The formatting of the list of icons."
         "Accepted values:"
         "    - default: no formatting,"
+        "    - single: show single icon only"
         "    - mathematician: factorize with superscripts (e.g. aababa -> a⁴b²),"
         "    - chemist: factorize with subscripts (e.g. aababa -> a₄b₂)."
     )
